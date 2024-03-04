@@ -1,0 +1,390 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace zadanie
+{
+    public partial class Form1 : Form
+    {
+        private GameState gameState;
+        private RichTextBox lblFeedback;
+        private TextBox txtGuess;
+        private Button btnGuess;
+        private Label lblAttempts;
+        private Button btnNewGame;
+        private Label lblInfo;
+
+        public Form1()
+        {
+            InitializeComponent();
+            InitializeLiteralnieControls();
+            StartNewGame();
+            this.Text = "Literaki";
+            btnGuess.BackColor = Color.LightBlue;
+            btnGuess.ForeColor = Color.Black;
+            btnNewGame.BackColor = Color.LightBlue;
+            btnNewGame.ForeColor = Color.Black;
+        }
+
+        private void InitializeLiteralnieControls()
+        {
+            lblFeedback = new RichTextBox
+            {
+                Location = new Point(10, 10),
+                Width = 300,
+                Height = 170,
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Arial", 18),
+            };
+            Controls.Add(lblFeedback);
+
+            txtGuess = new TextBox { Location = new Point(10, lblFeedback.Bottom + 10), Width = 150 };
+            Controls.Add(txtGuess);
+
+            btnGuess = new Button { Text = "Zgadnij", Location = new Point(170, lblFeedback.Bottom + 10) };
+            btnGuess.Click += btnGuess_Click;
+            Controls.Add(btnGuess);
+
+            lblAttempts = new Label { Location = new Point(10, txtGuess.Bottom + 10), AutoSize = true };
+            Controls.Add(lblAttempts);
+
+            lblInfo = new Label { Text = "Wpisz pięcioliterowe słowo!", Location = new Point(lblFeedback.Right + 7, 
+            lblFeedback.Top), AutoSize = true, Font = new Font("Arial", 15)};
+            Controls.Add(lblInfo);
+
+            btnNewGame = new Button { Text = "Nowa Gra", Location = new Point(170, txtGuess.Bottom + 10) };
+            btnNewGame.Click += btnNewGame_Click;
+            Controls.Add(btnNewGame);
+        }
+
+
+
+        private void StartNewGame()
+        {
+            gameState = new GameState
+            {
+                HiddenWord = GenerateRandomWord(),
+                AttemptsLeft = GameState.MaxAttempts
+            };
+
+            lblFeedback.Text = "";
+            txtGuess.Text = "";
+            UpdateAttemptsLabel();
+
+            btnGuess.Enabled = true;
+        }
+
+        private string GenerateRandomWord()
+        {
+            string[] words = { "BALON", "BOMBA", "BURZA", "DAWCA", "EFEKT", "FAJKA", "FARBA", "FLIRT", "FORMA", "FRAZA" };
+            return words[new Random().Next(words.Length)];
+        }
+
+        private void CheckGuess(string guess)
+        {
+            if (!IsGuessValid(guess))
+                return;
+
+            char[] hiddenChars = gameState.HiddenWord.ToCharArray();
+            char[] guessChars = guess.ToCharArray();
+
+            StringBuilder feedback = new StringBuilder();
+
+            for (int i = 0; i < gameState.HiddenWord.Length; i++)
+            {
+                Color textColor = DetermineTextColor(hiddenChars[i], guessChars[i]);
+                feedback.Append($"{guessChars[i]} ");
+                lblFeedback.AppendText($"{guessChars[i]} ", textColor);
+            }
+
+            lblFeedback.AppendText(Environment.NewLine);
+            gameState.PreviousFeedbacks.Add(feedback.ToString().Trim());
+
+            gameState.AttemptsLeft--;
+
+            if (IsGameWon(feedback) || gameState.AttemptsLeft == 0)
+            {
+                HandleEndOfGame(feedback);
+            }
+
+            UpdateAttemptsLabel();
+        }
+
+        private bool IsGuessValid(string guess)
+        {
+            if (guess.Length != gameState.HiddenWord.Length)
+            {
+                MessageBox.Show("Hasło musi mieć dokładnie 5 liter.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            return true;
+        }
+
+        private Color DetermineTextColor(char hiddenChar, char guessChar)
+        {
+            return hiddenChar == guessChar ? Color.Green : (gameState.HiddenWord.Contains(guessChar) ? Color.Orange : Color.Black);
+        }
+
+        private bool IsGameWon(StringBuilder feedback)
+        {
+            return feedback.ToString().Replace(" ", "") == gameState.HiddenWord;
+        }
+
+        private void HandleEndOfGame(StringBuilder feedback)
+        {
+            if (IsGameWon(feedback))
+            {
+                lblFeedback.ForeColor = Color.Green;
+                lblFeedback.Text = "Gratulacje! Odgadłeś słowo!";
+            }
+            else
+            {
+                lblFeedback.ForeColor = Color.Red;
+                lblFeedback.Text = $"Przegrałeś! Prawidłowe słowo to: {gameState.HiddenWord}";
+            }
+
+            btnGuess.Enabled = false;
+        }
+
+        private void UpdateAttemptsLabel()
+        {
+            lblAttempts.Text = $"Pozostałe próby: {gameState.AttemptsLeft}";
+        }using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace zadanie
+{
+    public partial class Form1 : Form
+    {
+        private GameState gameState;
+
+        private RichTextBox lblFeedback;
+        private TextBox txtGuess;
+        private Button btnGuess;
+        private Label lblAttempts;
+        private Button btnNewGame;
+        private Label lblInfo;
+
+        public Form1()
+        {
+            InitializeComponent();
+            InitializeLiteralnieControls();
+            StartNewGame();
+            this.Text = "Literalnie";
+            btnGuess.BackColor = Color.LightBlue;
+            btnGuess.ForeColor = Color.Black;
+            btnNewGame.BackColor = Color.LightBlue;
+            btnNewGame.ForeColor = Color.Black;
+        }
+
+        private void InitializeWordleControls()
+        {
+            lblFeedback = new RichTextBox
+            {
+                Location = new Point(10, 10),
+                Width = 300,
+                Height = 170,
+                ReadOnly = true,
+                BorderStyle = BorderStyle.None,
+                Font = new Font("Arial", 18),
+            };
+            Controls.Add(lblFeedback);
+
+            txtGuess = new TextBox { Location = new Point(10, lblFeedback.Bottom + 10), Width = 150 };
+            Controls.Add(txtGuess);
+
+            btnGuess = new Button { Text = "Zgadnij", Location = new Point(170, lblFeedback.Bottom + 10) };
+            btnGuess.Click += btnGuess_Click;
+            Controls.Add(btnGuess);
+
+            lblAttempts = new Label { Location = new Point(10, txtGuess.Bottom + 10), AutoSize = true };
+            Controls.Add(lblAttempts);
+
+            lblInfo = new Label { Text = "Wpisz pięcioliterowe słowo!", Location = new Point(lblFeedback.Right + 7, 
+            lblFeedback.Top), AutoSize = true, Font = new Font("Arial", 15)};
+            Controls.Add(lblInfo);
+
+            btnNewGame = new Button { Text = "Nowa Gra", Location = new Point(170, txtGuess.Bottom + 10) };
+            btnNewGame.Click += btnNewGame_Click;
+            Controls.Add(btnNewGame);
+        }
+
+
+
+        private void StartNewGame()
+        {
+            gameState = new GameState
+            {
+                HiddenWord = GenerateRandomWord(),
+                AttemptsLeft = GameState.MaxAttempts
+            };
+
+            lblFeedback.Text = "";
+            txtGuess.Text = "";
+            UpdateAttemptsLabel();
+
+            btnGuess.Enabled = true;
+        }
+
+        private string GenerateRandomWord()
+        {
+            string[] words = { "BALON", "BOMBA", "BURZA", "DAWCA", "EFEKT", "FAJKA", "FARBA", "FLIRT", "FORMA", "FRAZA", "FUTRO", "FUTRA", "GLINA", "HAMAK", "JAJKO", "KLUCZ", "KOLOR", "KOMAR", "KRZYK" };
+            return words[new Random().Next(words.Length)];
+        }
+
+        private void CheckGuess(string guess)
+        {
+            if (!IsGuessValid(guess))
+                return;
+
+            char[] hiddenChars = gameState.HiddenWord.ToCharArray();
+            char[] guessChars = guess.ToCharArray();
+
+            StringBuilder feedback = new StringBuilder();
+
+            for (int i = 0; i < gameState.HiddenWord.Length; i++)
+            {
+                Color textColor = DetermineTextColor(hiddenChars[i], guessChars[i]);
+                feedback.Append($"{guessChars[i]} ");
+                lblFeedback.AppendText($"{guessChars[i]} ", textColor);
+            }
+
+            lblFeedback.AppendText(Environment.NewLine);
+            gameState.PreviousFeedbacks.Add(feedback.ToString().Trim());
+
+            gameState.AttemptsLeft--;
+
+            if (IsGameWon(feedback) || gameState.AttemptsLeft == 0)
+            {
+                HandleEndOfGame(feedback);
+            }
+
+            UpdateAttemptsLabel();
+        }
+
+        private bool IsGuessValid(string guess)
+        {
+            if (guess.Length != gameState.HiddenWord.Length)
+            {
+                MessageBox.Show("Hasło musi mieć dokładnie 5 liter.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+            return true;
+        }
+
+        private Color DetermineTextColor(char hiddenChar, char guessChar)
+        {
+            return hiddenChar == guessChar ? Color.Green : (gameState.HiddenWord.Contains(guessChar) ? Color.Orange : Color.Black);
+        }
+
+        private bool IsGameWon(StringBuilder feedback)
+        {
+            return feedback.ToString().Replace(" ", "") == gameState.HiddenWord;
+        }
+
+        private void HandleEndOfGame(StringBuilder feedback)
+        {
+            if (IsGameWon(feedback))
+            {
+                lblFeedback.ForeColor = Color.Green;
+                lblFeedback.Text = "Gratulacje! Odgadłeś słowo!";
+            }
+            else
+            {
+                lblFeedback.ForeColor = Color.Red;
+                lblFeedback.Text = $"Przegrałeś! Prawidłowe słowo to: {gameState.HiddenWord}";
+            }
+
+            btnGuess.Enabled = false;
+        }
+
+        private void UpdateAttemptsLabel()
+        {
+            lblAttempts.Text = $"Pozostałe próby: {gameState.AttemptsLeft}";
+        }
+
+        private void btnNewGame_Click(object sender, EventArgs e)
+        {
+            StartNewGame();
+        }
+
+        private void btnGuess_Click(object sender, EventArgs e)
+        {
+            string guess = txtGuess.Text.ToUpper();
+            if (IsGuessValid(guess) && btnGuess.Enabled)
+            {
+                CheckGuess(guess);
+            }
+        }
+
+        public class GameState
+        {
+            public const int MaxAttempts = 6;
+            public string HiddenWord { get; set; }
+            public int AttemptsLeft { get; set; }
+            public List<string> PreviousFeedbacks { get; } = new List<string>();
+        }
+    }
+
+
+
+    public static class RichTextBoxExtensions
+    {
+        public static void AppendText(this RichTextBox box, string text, Color color)
+        {
+            box.SelectionStart = box.TextLength;
+            box.SelectionLength = 0;
+            box.SelectionColor = color;
+            box.AppendText(text);
+            box.SelectionColor = box.ForeColor;
+        }
+    }
+}
+
+        private void btnNewGame_Click(object sender, EventArgs e)
+        {
+            StartNewGame();
+        }
+
+        private void btnGuess_Click(object sender, EventArgs e)
+        {
+            string guess = txtGuess.Text.ToUpper();
+            if (IsGuessValid(guess) && btnGuess.Enabled)
+            {
+                CheckGuess(guess);
+            }
+        }
+
+        public class GameState
+        {
+            public const int MaxAttempts = 6;
+            public string HiddenWord { get; set; }
+            public int AttemptsLeft { get; set; }
+            public List<string> PreviousFeedbacks { get; } = new List<string>();
+        }
+    }
+
+
+
+    public static class RichTextBoxExtensions
+    {
+        public static void AppendText(this RichTextBox box, string text, Color color)
+        {
+            box.SelectionStart = box.TextLength;
+            box.SelectionLength = 0;
+            box.SelectionColor = color;
+            box.AppendText(text);
+            box.SelectionColor = box.ForeColor;
+        }
+    }
+}
